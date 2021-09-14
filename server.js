@@ -1,23 +1,26 @@
 'use strict';
 
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
 
-const sever = express();
-sever.use(cors());
+const server = express();
+server.use(cors());
 
-const PORT = process.env.PORT || 3030;
+
+//access req.body
+server.use(express.json());
+
+const PORT = process.env.PORT;
 
 //MongoDB
-
 const mongoose = require('mongoose');
 
 let bookModel;
 main().catch(err => console.log(err));
 
 async function main() {
-  await mongoose.connect('mongodb://localhost:27017/Books');
+  await mongoose.connect(process.env.MONGO_URL);
 
   const bookSchema = new mongoose.Schema({
     title: String,
@@ -72,8 +75,12 @@ async function seedData()
 
 
 
+// http://localhost:3030/books?email=mohammadharoun44@gmail.com
+server.get('/books', booksHandler) ;
 
-sever.get('/books', booksHandler) 
+server.post('/addBook',addBookHandler);
+
+server.delete('/deleteBook/:id',deleteBookHandler);
 
 
 
@@ -93,6 +100,64 @@ function booksHandler(req,res){
 
 }
 
+async function addBookHandler(req,res){
+  console.log(req.body);
+
+  // const title = req.body.title;
+  // const description = req.body.description;
+  // const status = req.body.status;
+  // const email = req.body.email;
+
+  const {title, description, status,email} = req.body;
+
+  await bookModel.create({ 
+    title: title,
+    description: description,
+    status: status,
+    email:email,
+  });
+
+  // await bookModel.create({title,description,status,email});
+
+  bookModel.find({email:email},(err,result)=>{
+      if(err)
+      {
+          console.log(err);
+      }
+      else
+      {
+          res.send(result);
+      }
+  })
+
+}
 
 
-sever.listen(PORT, () => console.log(`listening on ${PORT}`));
+function deleteBookHandler(req,res){
+  const bookId = req.params.id;
+  const email = req.query.email;
+  bookModel.deleteOne({_id:bookId},(err,result)=>{
+      
+    bookModel.find({email:email},(err,result)=>{
+          if(err)
+          {
+              console.log(err);
+          }
+          else
+          {
+              res.send(result);
+          }
+      })
+
+  })
+
+
+}
+
+
+
+
+
+
+
+server.listen(PORT, () => console.log(`listening on ${PORT}`));
