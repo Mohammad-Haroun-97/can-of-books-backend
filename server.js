@@ -82,6 +82,8 @@ server.post('/addBook',addBookHandler);
 
 server.delete('/deleteBook/:id',deleteBookHandler);
 
+server.put('/updateBook/:id',updateBookHandler);
+
 
 
 function booksHandler(req,res){
@@ -155,7 +157,22 @@ function deleteBookHandler(req,res){
 }
 
 
+function updateBookHandler(req,res) {
+  const bookId = req.params.id
+  // const email = req.query.email;
+  const {title,description,status,email}=req.body;
 
+
+  console.log(title,description,status,bookId);
+
+  bookModel.findByIdAndUpdate(bookId,{title,description,status,email},(err,result)=>{
+    bookModel.find({email:email},(err,result)=>{
+     
+            res.send(result);
+        
+    })
+})
+}
 
 
 
